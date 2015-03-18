@@ -1,6 +1,4 @@
 //
-// Copyright 2014 Liferay, Inc. All rights reserved.
-// http://www.liferay.com
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -43,6 +41,8 @@ win.open();
 var TiBeacons = null;
 if (Ti.Platform.name == "android") {
     TiBeacons = require('com.drtech.altbeacon');
+    TiBeacons.addBeaconLayout("m:2-3=0215,i:4-19,i:20-21,i:22-23,p:24-24");
+    TiBeacons.bindBeaconService();
     label.text = "module is => " + TiBeacons + "and checkAvailability says: " + TiBeacons.checkAvailability();
 } else {
     label.text = "com.drtech.altbeacon not supported on " + Ti.Platform.name;
