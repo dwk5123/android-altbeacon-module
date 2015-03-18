@@ -1,6 +1,6 @@
 /**
  * 
- * Copyright 2015 David Kopczyk. All rights reserved.
+ * Modifications Copyright 2015 David Kopczyk. All rights reserved.
  * Adapted from LiferayBeaconsModule.java authored by James Falkner
  * 
  * Copyright 2015 Liferay, Inc. All rights reserved.

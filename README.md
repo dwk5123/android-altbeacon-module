@@ -161,4 +161,4 @@ dwk5123@gmail.com
 
 ## License
 
-TODO: Enter your license/legal information here.
+Licensed under the Apache 2.0 license.  Modifications Copyright 2015 David Kopczyk.
