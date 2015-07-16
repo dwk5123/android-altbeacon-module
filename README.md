@@ -27,7 +27,7 @@ Unbinds the BeaconService binded with ```Altbeacon.bindBeaconService()```. See d
 
 ### Altbeacon.beaconServiceIsBound()
 
-Checks the current activity is binded to the current application context. See description of bindBeaconService for more details.
+Checks the beacon service is binded to the current application context. See description of bindBeaconService for more details.
 
 ### Altbeacon.setBackgroundMode(boolean flag)
 
