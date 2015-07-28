@@ -119,6 +119,22 @@ public class AndroidAltbeaconModuleModule extends KrollModule implements BeaconC
 	public void bindBeaconService() {
 		beaconManager.bind(this);
 	}
+	
+	/**
+	 * Unbinds the activity to the Beacon Service
+	 */
+	@Kroll.method
+	public void unbindBeaconService() {
+		beaconManager.unbind(this);
+	}
+	
+	/**
+	 * Check the activity is bound to the Beacon Service
+	 */
+	@Kroll.method
+	public boolean beaconServiceIsBound() {
+		return beaconManager.isBound(this);
+	}
 
 	/**
 	 * Throttles down iBeacon library when app placed in background (but you have to
@@ -358,7 +374,7 @@ public class AndroidAltbeaconModuleModule extends KrollModule implements BeaconC
 		}
 		
 	}
-	
+
 	@Override
 	public void onStart(Activity activity)
 	{
@@ -510,7 +526,7 @@ public class AndroidAltbeaconModuleModule extends KrollModule implements BeaconC
 
 		});
 	}
-	
+
 	/**
 	 * Sets the upper proximity ranges.
 	 */
@@ -590,11 +606,11 @@ public class AndroidAltbeaconModuleModule extends KrollModule implements BeaconC
 
 	public void unbindService(ServiceConnection serviceConnection) {
 		Log.d(LCAT, "unbindService");
-		super.getActivity().unbindService(serviceConnection);
+		super.getActivity().getApplicationContext().unbindService(serviceConnection);
 	}
 
 	public boolean bindService(Intent intent, ServiceConnection serviceConnection, int i) {
 		Log.d(LCAT, "bindService");
-		return super.getActivity().bindService(intent, serviceConnection, i);
+		return super.getActivity().getApplicationContext().bindService(intent, serviceConnection, i);
 	}
 }

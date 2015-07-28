@@ -19,7 +19,15 @@ Returns true if the device has BLE capability/Bluetooth is turned on.
 
 ### Altbeacon.bindBeaconService()
 
-Binds the Android activity to the BeaconService provided by the library.  If a custom BeaconParser is required, make sure the parser is added BEFORE calling this method.
+Binds the Android application context to the BeaconService provided by the library.  If a custom BeaconParser is required, make sure the parser is added BEFORE calling this method.
+
+### Altbeacon.unbindBeaconService()
+
+Unbinds the BeaconService binded with ```Altbeacon.bindBeaconService()```. See description of bindBeaconService for more details.
+
+### Altbeacon.beaconServiceIsBound()
+
+Checks the beacon service is binded to the current application context. See description of bindBeaconService for more details.
 
 ### Altbeacon.setBackgroundMode(boolean flag)
 
