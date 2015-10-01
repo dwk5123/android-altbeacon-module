@@ -10,6 +10,18 @@
 		<manifest>
           <uses-permission android:name="android.permission.BLUETOOTH"/>
           <uses-permission android:name="android.permission.BLUETOOTH_ADMIN"/>
+          <application>
+		    <service android:enabled="true"
+		        android:exported="false"
+		        android:isolatedProcess="false"
+		        android:label="beacon"
+		        android:name="org.altbeacon.beacon.service.BeaconService"
+		        />
+
+		    <service android:name="org.altbeacon.beacon.BeaconIntentProcessor"
+		        android:enabled="true"
+		        />
+          </application>
         </manifest>
 	</android>
 	<mobileweb>
