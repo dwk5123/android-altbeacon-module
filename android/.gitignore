@@ -1,2 +1,4 @@
 /build
 /libs
+build.properties
+.DS_Store
