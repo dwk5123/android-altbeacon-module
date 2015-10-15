@@ -1,3 +1,4 @@
 /.apt_generated
 /bin
 /build
+.DS_STORE

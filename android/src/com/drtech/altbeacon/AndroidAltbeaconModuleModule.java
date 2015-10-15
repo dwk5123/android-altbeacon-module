@@ -440,8 +440,9 @@ public class AndroidAltbeaconModuleModule extends KrollModule implements BeaconC
 	}
 	
 	public void onBeaconServiceConnect() {
-
-		Log.d(LCAT, "onBeaconServiceConnect");
+		KrollDict e = new KrollDict();
+		e.put("message", "success");
+		fireEvent("serviceBound", e);
 		beaconManager.setMonitorNotifier(new MonitorNotifier() {
 
 			public void didEnterRegion(Region region) {
