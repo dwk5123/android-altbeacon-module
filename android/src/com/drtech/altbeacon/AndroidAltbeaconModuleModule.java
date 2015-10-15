@@ -71,7 +71,6 @@ public class AndroidAltbeaconModuleModule extends KrollModule implements BeaconC
 		Log.d(LCAT, "Create beaconmanager, setup in foregroundmode");
 		beaconManager = BeaconManager.getInstanceForApplication(app);
 		beaconManager.setBackgroundMode(false);
-		BeaconManager.setDebug(true);
 	}
 
 	/**
