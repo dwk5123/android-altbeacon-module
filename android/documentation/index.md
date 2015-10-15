@@ -19,11 +19,19 @@ Returns true if the device has BLE capability/Bluetooth is turned on.
 
 ### Altbeacon.bindBeaconService()
 
-Binds the Android activity to the BeaconService provided by the library.  If a custom BeaconParser is required, make sure the parser is added BEFORE calling this method.
+Binds the Android application context to the BeaconService provided by the library.  If a custom BeaconParser is required, make sure the parser is added BEFORE calling this method.
+
+### Altbeacon.unbindBeaconService()
+
+Unbinds the BeaconService binded with ```Altbeacon.bindBeaconService()```. See description of bindBeaconService for more details.
+
+### Altbeacon.beaconServiceIsBound()
+
+Checks the beacon service is binded to the current application context. See description of bindBeaconService for more details.
 
 ### Altbeacon.setBackgroundMode(boolean flag)
 
-Throttles down Altbeacon library when app placed in background (but you have to detect this yourself, this module does not know when apps are put in background).
+Throttles down Altbeacon library when app placed in background. It's detecting automatically onPause and onResume. By default the library starts up with `backgroundmode false`
 
 ### Altbeacon.enableAutoRanging()
 
@@ -36,6 +44,15 @@ Turns off auto ranging. See description of enableAutoRanging for more details.
 ### Altbeacon.setAutoRange(boolean autoRange)
 
 Turns auto ranging on or off. See description of enableAutoRanging for more details.
+
+### Altbeacon.setRunInService(boolean runInService)
+
+Set this property to `true` if the module is used inside a Service. If this value is `false`, it's unbinding the `BeaconService` on exiting the root activity automatically. If this value equals to `true`, it's not unbinding `onDestroy`, but you have to unBind the service manually `ontaskremoved`.
+
+More info: http://docs.appcelerator.com/platform/latest/#!/guide/Android_Services-section-43287937_AndroidServices-ServiceCode.
+
+### Altbeacon.isRunInService()
+ Returns the value sets earlier at the `Altbeacon.setRunInService()` method. Default: `false`.
 
 ### Altbeacon.setScanPeriods(scanPeriods)
 
@@ -161,4 +178,4 @@ dwk5123@gmail.com
 
 ## License
 
-TODO: Enter your license/legal information here.
+Licensed under the Apache 2.0 license.  Modifications Copyright 2015 David Kopczyk.
