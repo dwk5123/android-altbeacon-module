@@ -51,55 +51,31 @@ import android.content.Intent;
 import android.content.ServiceConnection;
 import android.os.RemoteException;
 
-/**
- * Events: enteredRegion, exitedRegion, determinedRegionState, beaconProximity
- */
-@Kroll.module(name="AltbeaconAndroidModule", id="com.drtech.altbeacon")
-public class AndroidAltbeaconModuleModule extends KrollModule implements BeaconConsumer
-{
+@Kroll.module(name = "AltbeaconAndroidModule", id = "com.drtech.altbeacon")
+public class AndroidAltbeaconModuleModule extends KrollModule implements BeaconConsumer {
 	private static BeaconTransmitter beaconTransmitter;
 	private static BeaconManager beaconManager;
 	private boolean autoRange = true;
-	
+	private boolean runInService = false;
+
 	// Standard Debugging variables
 	private static final String LCAT = "AltbeaconModule";
 	private static final boolean DBG = TiConfig.LOGD;
-	
+
 	private static double PROXIMITY_IMMEDIATE = 0.3;
 	private static double PROXIMITY_NEAR = 3.0;
 	private static double PROXIMITY_FAR = 10.0;
 
-	// You can define constants with @Kroll.constant, for example:
-	// @Kroll.constant public static final String EXTERNAL_NAME = value;
-
-	public AndroidAltbeaconModuleModule()
-	{
-		super();
-		Log.d(LCAT, "Constructor");
-	}
-	
 	@Kroll.onAppCreate
-	public static void onAppCreate(TiApplication app)
-	{
-		Log.d(LCAT, "inside onAppCreate");
-		// put module init code that needs to run when the application is created
-		
+	public static void onAppCreate(TiApplication app) {
+		Log.d(LCAT, "Create beaconmanager, setup in foregroundmode");
 		beaconManager = BeaconManager.getInstanceForApplication(app);
-		
-		//Set BeaconLayout for the beacon manager - this must be done before the service is bound
-		//See: https://github.com/AltBeacon/android-beacon-library/issues/100
-		//addBeaconLayout("m:2-3=0215,i:4-19,i:20-21,i:22-23,p:24-24");
-		
-		beaconManager.setForegroundScanPeriod(1200);
-		beaconManager.setForegroundBetweenScanPeriod(2300);
-		beaconManager.setBackgroundScanPeriod(10000);
-		beaconManager.setBackgroundBetweenScanPeriod(60 * 1000);
-		
-		//BeaconManager.setDebug(true);
+		beaconManager.setBackgroundMode(false);
+		beaconManager.setDebug(false);
 	}
-	
+
 	/**
-	 * See if Bluetooth 4.0 & LE is available on device
+	 * See if Bluetooth 4.0 and LE is available on device
 	 *
 	 * @return true if iBeacons can be used, false otherwise
 	 */
@@ -111,23 +87,40 @@ public class AndroidAltbeaconModuleModule extends KrollModule implements BeaconC
 			return false;
 		}
 	}
-	
+
 	/**
 	 * Binds the activity to the Beacon Service
 	 */
 	@Kroll.method
 	public void bindBeaconService() {
+		Log.d(LCAT, "bindService");
 		beaconManager.bind(this);
 	}
-	
+
 	/**
 	 * Unbinds the activity to the Beacon Service
 	 */
 	@Kroll.method
 	public void unbindBeaconService() {
+		Log.d(LCAT, "unbindService");
 		beaconManager.unbind(this);
 	}
-	
+
+	// methods to bind and unbind
+	public Context getApplicationContext() {
+		return super.getActivity().getApplicationContext();
+	}
+
+	public void unbindService(ServiceConnection serviceConnection) {
+		Log.d(LCAT, "unbindService");
+		super.getActivity().getApplicationContext().unbindService(serviceConnection);
+	}
+
+	public boolean bindService(Intent intent, ServiceConnection serviceConnection, int i) {
+		Log.d(LCAT, "bindService");
+		return super.getActivity().getApplicationContext().bindService(intent, serviceConnection, i);
+	}
+
 	/**
 	 * Check the activity is bound to the Beacon Service
 	 */
@@ -143,8 +136,7 @@ public class AndroidAltbeaconModuleModule extends KrollModule implements BeaconC
 	 * @param flag Whether to enable background mode or not.
 	 */
 	@Kroll.method
-	public void setBackgroundMode(boolean flag)
-	{
+	public void setBackgroundMode(boolean flag) {
 		Log.d(LCAT, "setBackgroundMode: " + flag);
 
 		if (!checkAvailability()) {
@@ -152,8 +144,24 @@ public class AndroidAltbeaconModuleModule extends KrollModule implements BeaconC
 			return;
 		}
 		beaconManager.setBackgroundMode(flag);
+	}
 
+	/**
+	 * @param flag Set run in service, to know the beaconscanner must be unbinded on destroy of the rootactivity
+	 */
+	@Kroll.method
+	public void setRunInService(boolean flag) {
+		Log.d(LCAT, "setRunInService: " + flag);
 
+		this.runInService = flag;
+	}
+
+	/**
+	 * Check this module is running inside a service
+	 */
+	@Kroll.method
+	public boolean isRunInService() {
+		return this.runInService;
 	}
 
 	/**
@@ -163,8 +171,7 @@ public class AndroidAltbeaconModuleModule extends KrollModule implements BeaconC
 	 * battery power so care should be taken with this setting.
 	 */
 	@Kroll.method
-	public void enableAutoRanging()
-	{
+	public void enableAutoRanging() {
 		setAutoRange(true);
 	}
 
@@ -174,11 +181,10 @@ public class AndroidAltbeaconModuleModule extends KrollModule implements BeaconC
 	 * @see #enableAutoRanging()
 	 */
 	@Kroll.method
-	public void disableAutoRanging()
-	{
+	public void disableAutoRanging() {
 		setAutoRange(false);
 	}
-	
+
 	/**
 	 * Turns auto ranging on or off. See description of enableAutoRanging for more details.
 	 *
@@ -188,8 +194,7 @@ public class AndroidAltbeaconModuleModule extends KrollModule implements BeaconC
 	 *
 	 */
 	@Kroll.method
-	public void setAutoRange(boolean autoRange)
-	{
+	public void setAutoRange(boolean autoRange) {
 		Log.d(LCAT, "setAutoRange: " + autoRange);
 		this.autoRange = autoRange;
 
@@ -201,12 +206,10 @@ public class AndroidAltbeaconModuleModule extends KrollModule implements BeaconC
 	 * @param scanPeriods the scan periods.
 	 */
 	@Kroll.method
-	public void setScanPeriods(Object scanPeriods)
-	{
-
+	public void setScanPeriods(Object scanPeriods) {
 		Log.d(LCAT, "setScanPeriods: " + scanPeriods);
 
-		HashMap<String, Object> dict = (HashMap<String, Object>)scanPeriods;
+		HashMap < String, Object > dict = (HashMap < String, Object > ) scanPeriods;
 
 		int foregroundScanPeriod = TiConvert.toInt(dict, "foregroundScanPeriod");
 		int foregroundBetweenScanPeriod = TiConvert.toInt(dict, "foregroundBetweenScanPeriod");
@@ -218,14 +221,13 @@ public class AndroidAltbeaconModuleModule extends KrollModule implements BeaconC
 		beaconManager.setBackgroundScanPeriod(backgroundScanPeriod);
 		beaconManager.setBackgroundBetweenScanPeriod(backgroundBetweenScanPeriod);
 	}
-	
+
 	/**
 	 * Start monitoring a region.
 	 * @param region the region to monitor, expected to be a property dictionary from javascript code.
 	 */
 	@Kroll.method
-	public void startMonitoringForRegion(Object region)
-	{
+	public void startMonitoringForRegion(Object region) {
 		Log.d(LCAT, "startMonitoringForRegion: " + region);
 
 		if (!checkAvailability()) {
@@ -233,7 +235,7 @@ public class AndroidAltbeaconModuleModule extends KrollModule implements BeaconC
 			return;
 		}
 		try {
-			HashMap<String, Object> dict = (HashMap<String, Object>)region;
+			HashMap < String, Object > dict = (HashMap < String, Object > ) region;
 
 			String identifier = TiConvert.toString(dict, "identifier");
 			String uuid = TiConvert.toString(dict, "uuid").toLowerCase();
@@ -244,7 +246,7 @@ public class AndroidAltbeaconModuleModule extends KrollModule implements BeaconC
 			Identifier id2 = (major == null) ? null : Identifier.fromInt(major);
 			Identifier id3 = (minor == null) ? null : Identifier.fromInt(minor);
 			//Region r = new Region(identifier, uuid, major, minor);
-			
+
 			Region r = new Region(identifier, id1, id2, id3);
 
 			Log.d(LCAT, "Beginning to monitor region " + r);
@@ -266,15 +268,14 @@ public class AndroidAltbeaconModuleModule extends KrollModule implements BeaconC
 	public void startRangingForBeacons(Object region) {
 		startRangingForRegion(region);
 	}
-	
+
 	/**
 	 * Start ranging a region. You can only range regions into which you have entered.
 	 *
 	 * @param region the region to range, expected to be a property dictionary from javascript code.
 	 */
 	@Kroll.method
-	public void startRangingForRegion(Object region)
-	{
+	public void startRangingForRegion(Object region) {
 		Log.d(LCAT, "startRangingForRegion: " + region);
 
 		if (!checkAvailability()) {
@@ -282,7 +283,7 @@ public class AndroidAltbeaconModuleModule extends KrollModule implements BeaconC
 			return;
 		}
 		try {
-			HashMap<String, Object> dict = (HashMap<String, Object>)region;
+			HashMap < String, Object > dict = (HashMap < String, Object > ) region;
 
 			String identifier = dict.get("identifier").toString(); //TiConvert.toString(dict, "identifier");
 			String uuid = dict.get("uuid").toString(); //TiConvert.toString(dict, "uuid").toLowerCase();
@@ -292,27 +293,22 @@ public class AndroidAltbeaconModuleModule extends KrollModule implements BeaconC
 			Identifier id1 = Identifier.parse(uuid);
 			Identifier id2 = (major == null) ? null : Identifier.fromInt(major);
 			Identifier id3 = (minor == null) ? null : Identifier.fromInt(minor);
-			//Region r = new Region(identifier, uuid, major, minor);
-			
 			Region r = new Region(identifier, id1, id2, id3);
-			
+
 			Log.d(LCAT, "Beginning to monitor region " + r);
 			beaconManager.startRangingBeaconsInRegion(r);
 		} catch (RemoteException ex) {
 			Log.e(LCAT, "Cannot start ranging region " + TiConvert.toString(region, "identifier"), ex);
 		}
 	}
-	
+
 	/**
 	 * Stop monitoring everything.
 	 */
 	@Kroll.method
-	public void stopMonitoringAllRegions()
-	{
-
+	public void stopMonitoringAllRegions() {
 		Log.d(LCAT, "stopMonitoringAllRegions");
-
-		for (Region r : beaconManager.getMonitoredRegions()) {
+		for (Region r: beaconManager.getMonitoredRegions()) {
 			try {
 				beaconManager.stopMonitoringBeaconsInRegion(r);
 				Log.d(LCAT, "Stopped monitoring region " + r);
@@ -327,12 +323,9 @@ public class AndroidAltbeaconModuleModule extends KrollModule implements BeaconC
 	 * Stop ranging for everything.
 	 */
 	@Kroll.method
-	public void stopRangingForAllBeacons()
-	{
-
+	public void stopRangingForAllBeacons() {
 		Log.d(LCAT, "stopRangingForAllBeacons");
-
-		for (Region r : beaconManager.getRangedRegions()) {
+		for (Region r: beaconManager.getRangedRegions()) {
 			try {
 				beaconManager.stopRangingBeaconsInRegion(r);
 				Log.d(LCAT, "Stopped ranging region " + r);
@@ -341,7 +334,23 @@ public class AndroidAltbeaconModuleModule extends KrollModule implements BeaconC
 			}
 		}
 	}
-	
+
+	/**
+	 * Remove BeaconParser described by layout from the manager
+	 */
+	@Kroll.method
+	public void addBeaconLayout(String layout) {
+		Log.d(LCAT, "Adding new BeaconLayout: " + layout);
+		if (beaconManager.isBound(this)) {
+			Log.d(LCAT, "Can't add a new BeaconLayout - service is currently bound");
+			return;
+		}
+		if (layout != null) {
+			beaconManager.getBeaconParsers().add(new BeaconParser().setBeaconLayout(layout));
+		}
+
+	}
+
 	/**
 	 * Add BeaconParser described by layout to the manager
 	 */
@@ -358,87 +367,43 @@ public class AndroidAltbeaconModuleModule extends KrollModule implements BeaconC
 		}
 		return result;
 	}
-	
-	/**
-	 * Remove BeaconParser described by layout from the manager
-	 */
-	@Kroll.method
-	public void addBeaconLayout(String layout) {
-		Log.d(LCAT, "Adding new BeaconLayout: " + layout);
-		if (beaconManager.isBound(this)) {
-			Log.d(LCAT, "Can't add a new BeaconLayout - service is currently bound");
-			return;
-		}
-		if (layout != null) {
-			beaconManager.getBeaconParsers().add(new BeaconParser().setBeaconLayout(layout));
-		}
-		
-	}
 
 	@Override
-	public void onStart(Activity activity)
-	{
-		// This method is called when the module is loaded and the root context is started
-
-		Log.d(LCAT, "[MODULE LIFECYCLE EVENT] start");
-		//beaconManager.bind(this);
-
-		super.onStart(activity);
-	}
-
-	@Override
-	public void onStop(Activity activity)
-	{
-		// This method is called when the root context is stopped
-
-		Log.d(LCAT, "[MODULE LIFECYCLE EVENT] stop");
-
-		//if (!beaconManager.isBound(this)) {
-		//	beaconManager.bind(this);
-		//}
-		super.onStop(activity);
-	}
-
-	@Override
-	public void onPause(Activity activity)
-	{
+	public void onPause(Activity activity) {
 		// This method is called when the root context is being suspended
+		Log.d(LCAT, "[MODULE LIFECYCLE EVENT] pause, switch to backgroundmode");
+		if (!beaconManager.isBound(this)) {
+			beaconManager.setBackgroundMode(true);
+		}
 
-		Log.d(LCAT, "[MODULE LIFECYCLE EVENT] pause");
-		//if (!beaconManager.isBound(this)) {
-		//	beaconManager.bind(this);
-		//}
-		
 		super.onPause(activity);
 	}
 
 	@Override
-	public void onResume(Activity activity)
-	{
+	public void onResume(Activity activity) {
 		// This method is called when the root context is being resumed
-
-		Log.d(LCAT, "[MODULE LIFECYCLE EVENT] resume");
-		//if (!beaconManager.isBound(this)) {
-		//	beaconManager.bind(this);
-		//}
+		Log.d(LCAT, "[MODULE LIFECYCLE EVENT] resume, switch to foregroundmode");
+		if (!beaconManager.isBound(this)) {
+			beaconManager.setBackgroundMode(false);
+		}
 
 		super.onResume(activity);
 	}
-	
-	@Override
-	public void onDestroy(Activity activity)
-	{
-		// This method is called when the root context is being destroyed
 
-		Log.d(LCAT, "[MODULE LIFECYCLE EVENT] destroy");
-		//beaconManager.unbind(this);
-		if (activity.isFinishing()) {
-			Log.d(LCAT, "[MODULE LIFECYCLE EVENT] destroy - isFinishing==true");
+	@Override
+	public void onDestroy(Activity activity) {
+		// This method is called when the root context is being resumed
+		Log.d(LCAT, "[MODULE LIFECYCLE EVENT] onDestroy");
+		if (!beaconManager.isBound(this) && !runInService) {
+			Log.d(LCAT, "[MODULE LIFECYCLE EVENT] onDestroy, unbindservice because it's running in an activity");
 			beaconManager.unbind(this);
+		} else {
+			Log.d(LCAT, "[MODULE LIFECYCLE EVENT] onDestroy, not unbinded altbeacon, because it's running in a service. Unbind it on taskremoved in the service.");
 		}
+
 		super.onDestroy(activity);
 	}
-	
+
 	public void onBeaconServiceConnect() {
 		KrollDict e = new KrollDict();
 		e.put("message", "success");
@@ -446,7 +411,6 @@ public class AndroidAltbeaconModuleModule extends KrollModule implements BeaconC
 		beaconManager.setMonitorNotifier(new MonitorNotifier() {
 
 			public void didEnterRegion(Region region) {
-
 				Log.d(LCAT, "Entered region: " + region);
 
 				try {
@@ -463,7 +427,6 @@ public class AndroidAltbeaconModuleModule extends KrollModule implements BeaconC
 			}
 
 			public void didExitRegion(Region region) {
-
 				Log.d(LCAT, "Exited region: " + region);
 
 				try {
@@ -508,15 +471,15 @@ public class AndroidAltbeaconModuleModule extends KrollModule implements BeaconC
 		});
 
 		beaconManager.setRangeNotifier(new RangeNotifier() {
-			public void didRangeBeaconsInRegion(Collection<Beacon> beacons, Region region) {
-				for (Beacon beacon : beacons) {
+			public void didRangeBeaconsInRegion(Collection < Beacon > beacons, Region region) {
+				for (Beacon beacon: beacons) {
 					// identifier, uuid,major,minor,proximity,fromProximity,accuracy,rssi
 					KrollDict e = new KrollDict();
 					e.put("identifier", region.getUniqueId());
 					e.put("uuid", beacon.getId1().toString());
 					e.put("major", beacon.getId2().toString());
 					e.put("minor", beacon.getId3().toString());
-					e.put("proximity", getProximityName((int)beacon.getDistance()));
+					e.put("proximity", getProximityName((int) beacon.getDistance()));
 					e.put("accuracy", beacon.getDistance());
 					e.put("rssi", beacon.getRssi());
 					e.put("power", beacon.getTxPower());
@@ -524,22 +487,20 @@ public class AndroidAltbeaconModuleModule extends KrollModule implements BeaconC
 					fireEvent("beaconProximity", e);
 				}
 			}
-
 		});
 	}
 
 	/**
 	 * Sets the upper proximity ranges.
-	 */
-	@Kroll.method
+	 */@Kroll.method
 	public void setProximityBounds(Object bounds) {
-		HashMap<String, Object> dict = (HashMap<String, Object>)bounds;
+		HashMap < String, Object > dict = (HashMap < String, Object > ) bounds;
 
 		PROXIMITY_FAR = TiConvert.toDouble(dict, "far");
 		PROXIMITY_NEAR = TiConvert.toDouble(dict, "near");
 		PROXIMITY_IMMEDIATE = TiConvert.toDouble(dict, "immediate");
 	}
-	
+
 	public static String getProximityName(double d) {
 		if (d <= PROXIMITY_IMMEDIATE) {
 			return "immediate";
@@ -551,67 +512,49 @@ public class AndroidAltbeaconModuleModule extends KrollModule implements BeaconC
 			return "unknown";
 		}
 	}
-	
+
 	/**
 	 * Checks to see if Altbeacon advertisement/transmission is supported on the device
-	 */
-	@Kroll.method
+	 */@Kroll.method
 	public boolean isTransmissionSupported() {
 		return (BeaconTransmitter.checkTransmissionSupported(getApplicationContext()) == BeaconTransmitter.SUPPORTED);
 	}
-	
+
 	/**
 	 * Creates a new Altbeacon advertisement - COMPLETELY UNTESTED
 	 * Code adapted from http://altbeacon.github.io/android-beacon-library/beacon-transmitter.html
-	 */
-	@Kroll.method
+	 */@Kroll.method
 	public void startBeaconAdvertisement(Object beaconData) {
-		HashMap<String, Object> dict = (HashMap<String, Object>) beaconData;
-		
+		HashMap < String, Object > dict = (HashMap < String, Object > ) beaconData;
+
 		String id1 = TiConvert.toString(dict, "uuid");
 		String id2 = TiConvert.toString(dict, "major");
 		String id3 = TiConvert.toString(dict, "minor");
 		int mfrID = TiConvert.toInt(dict, "mfrid");
 		int txPower = TiConvert.toInt(dict, "txpower");
-		
+
 		Builder builder = new Beacon.Builder().setId1(id1).setId2(id2).setId3(id3).setManufacturer(mfrID).setTxPower(txPower);
-		Object[] dataObj = (Object[])dict.get("data");
+		Object[] dataObj = (Object[]) dict.get("data");
 		if (dataObj != null) {
 			String[] dataStr = TiConvert.toStringArray(dataObj);
-			ArrayList<Long> data = new ArrayList<Long>();
-			for (String s : dataStr) {
+			ArrayList < Long > data = new ArrayList < Long > ();
+			for (String s: dataStr) {
 				data.add(Long.parseLong(s));
 			}
 			builder.setDataFields(data);
 		}
-		
+
 		String layout = TiConvert.toString(dict, "layout");
 		BeaconParser parser = new BeaconParser().setBeaconLayout(layout);
 		beaconTransmitter = new BeaconTransmitter(getApplicationContext(), parser);
-		
+
 		beaconTransmitter.startAdvertising(builder.build());
 	}
-	
+
 	/**
 	 * Stops the advertised beacon(s) - COMPLETELY UNTESTED
-	 */
-	@Kroll.method
+	 */@Kroll.method
 	public void stopBeaconAdvertisement() {
 		beaconTransmitter.stopAdvertising();
-	}
-
-	// methods to bind and unbind
-	public Context getApplicationContext() {
-		return super.getActivity().getApplicationContext();
-	}
-
-	public void unbindService(ServiceConnection serviceConnection) {
-		Log.d(LCAT, "unbindService");
-		super.getActivity().getApplicationContext().unbindService(serviceConnection);
-	}
-
-	public boolean bindService(Intent intent, ServiceConnection serviceConnection, int i) {
-		Log.d(LCAT, "bindService");
-		return super.getActivity().getApplicationContext().bindService(intent, serviceConnection, i);
 	}
 }
