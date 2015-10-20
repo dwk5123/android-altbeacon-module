@@ -372,7 +372,7 @@ public class AndroidAltbeaconModuleModule extends KrollModule implements BeaconC
 	public void onPause(Activity activity) {
 		// This method is called when the root context is being suspended
 		Log.d(LCAT, "[MODULE LIFECYCLE EVENT] pause, switch to backgroundmode");
-		if (!beaconManager.isBound(this)) {
+		if (beaconManager.isBound(this)) {
 			beaconManager.setBackgroundMode(true);
 		}
 
@@ -383,7 +383,7 @@ public class AndroidAltbeaconModuleModule extends KrollModule implements BeaconC
 	public void onResume(Activity activity) {
 		// This method is called when the root context is being resumed
 		Log.d(LCAT, "[MODULE LIFECYCLE EVENT] resume, switch to foregroundmode");
-		if (!beaconManager.isBound(this)) {
+		if (beaconManager.isBound(this)) {
 			beaconManager.setBackgroundMode(false);
 		}
 
@@ -394,7 +394,7 @@ public class AndroidAltbeaconModuleModule extends KrollModule implements BeaconC
 	public void onDestroy(Activity activity) {
 		// This method is called when the root context is being resumed
 		Log.d(LCAT, "[MODULE LIFECYCLE EVENT] onDestroy");
-		if (!beaconManager.isBound(this) && !runInService) {
+		if (beaconManager.isBound(this) && !runInService) {
 			Log.d(LCAT, "[MODULE LIFECYCLE EVENT] onDestroy, unbindservice because it's running in an activity");
 			beaconManager.unbind(this);
 		} else {
