@@ -13,9 +13,13 @@ To access this module from JavaScript, you would do the following:
 
 ## Reference
 
+### Altbeacon.isBLESupported()
+
+Check if Bluetooth LE is supported by this Android device. Doesn't matter if it's enabled or disabled.
+
 ### Altbeacon.checkAvailability()
 
-Returns true if the device has BLE capability/Bluetooth is turned on.
+Check if Bluetooth LE is supported by this Android device, and if so, make sure it is enabled.
 
 ### Altbeacon.bindBeaconService()
 
@@ -31,7 +35,7 @@ Checks the beacon service is binded to the current application context. See desc
 
 ### Altbeacon.setBackgroundMode(boolean flag)
 
-Throttles down Altbeacon library when app placed in background. It's detecting automatically onPause and onResume. By default the library starts up with `backgroundmode false`
+Throttles down Altbeacon library when app placed in background. By default the library starts up with `backgroundmode false`. It's possible to change this `onPause` and `onResume` in the `currentActivity`.
 
 ### Altbeacon.enableAutoRanging()
 
