@@ -27,6 +27,9 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 
+import android.bluetooth.BluetoothAdapter;
+import android.bluetooth.BluetoothManager;
+
 import org.altbeacon.beacon.Beacon;
 import org.altbeacon.beacon.Beacon.Builder;
 import org.altbeacon.beacon.BeaconConsumer;
@@ -48,6 +51,7 @@ import org.appcelerator.titanium.util.TiConvert;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.content.ServiceConnection;
 import android.os.RemoteException;
 
@@ -75,9 +79,25 @@ public class AndroidAltbeaconModuleModule extends KrollModule implements BeaconC
 	}
 
 	/**
-	 * See if Bluetooth 4.0 and LE is available on device
+	 * Check if Bluetooth LE is supported by this Android device.
 	 *
-	 * @return true if iBeacons can be used, false otherwise
+	 * @return false if it is supported and not enabled
+	 */
+	@Kroll.method
+	public boolean isBLESupported() {
+		if (android.os.Build.VERSION.SDK_INT < 18) {
+			return false;
+		}
+		if (!super.getActivity().getApplicationContext().getPackageManager().hasSystemFeature(PackageManager.FEATURE_BLUETOOTH_LE)) {
+			return false;
+		}
+		return true;
+	}
+
+	/**
+	 * Check Bluetooth is enabled now
+	 *
+	 * @return false if it is not enabled
 	 */
 	@Kroll.method
 	public boolean checkAvailability() {
@@ -369,32 +389,10 @@ public class AndroidAltbeaconModuleModule extends KrollModule implements BeaconC
 	}
 
 	@Override
-	public void onPause(Activity activity) {
-		// This method is called when the root context is being suspended
-		Log.d(LCAT, "[MODULE LIFECYCLE EVENT] pause, switch to backgroundmode");
-		if (!beaconManager.isBound(this)) {
-			beaconManager.setBackgroundMode(true);
-		}
-
-		super.onPause(activity);
-	}
-
-	@Override
-	public void onResume(Activity activity) {
-		// This method is called when the root context is being resumed
-		Log.d(LCAT, "[MODULE LIFECYCLE EVENT] resume, switch to foregroundmode");
-		if (!beaconManager.isBound(this)) {
-			beaconManager.setBackgroundMode(false);
-		}
-
-		super.onResume(activity);
-	}
-
-	@Override
 	public void onDestroy(Activity activity) {
 		// This method is called when the root context is being resumed
 		Log.d(LCAT, "[MODULE LIFECYCLE EVENT] onDestroy");
-		if (!beaconManager.isBound(this) && !runInService) {
+		if (beaconManager.isBound(this) && !runInService) {
 			Log.d(LCAT, "[MODULE LIFECYCLE EVENT] onDestroy, unbindservice because it's running in an activity");
 			beaconManager.unbind(this);
 		} else {
