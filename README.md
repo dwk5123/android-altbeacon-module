@@ -58,6 +58,9 @@ More info: http://docs.appcelerator.com/platform/latest/#!/guide/Android_Service
 ### Altbeacon.isRunInService()
  Returns the value sets earlier at the `Altbeacon.setRunInService()` method. Default: `false`.
 
+### Altbeacon.setRegionExitPeriod()
+Set the exit region period in milliseconds
+
 ### Altbeacon.setScanPeriods(scanPeriods)
 
 Set the scan periods for the bluetooth scanner.
