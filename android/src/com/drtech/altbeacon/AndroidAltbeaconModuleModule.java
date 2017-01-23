@@ -220,6 +220,12 @@ public class AndroidAltbeaconModuleModule extends KrollModule implements BeaconC
 
 	}
 
+	@Kroll.method
+	public void setRegionExitPeriod(long regionExitPeriod) {
+		Log.d(LCAT, "setRegionExitPeriod: " + regionExitPeriod);
+		beaconManager.setRegionExitPeriod(regionExitPeriod);
+	}
+
 	/**
 	 * Set the scan periods for the bluetooth scanner.
 	 *
