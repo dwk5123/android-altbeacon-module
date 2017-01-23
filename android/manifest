@@ -2,9 +2,9 @@
 # this is your module manifest and used by Titanium
 # during compilation, packaging, distribution, etc.
 #
-version: 1.5.0
-apiversion: 2
-architectures: armeabi armeabi-v7a x86
+version: 2.0.0
+apiversion: 3
+architectures: armeabi-v7a x86
 description: android-altbeacon-module
 author: Your Name
 license: Specify your license
@@ -15,4 +15,4 @@ name: android-altbeacon-module
 moduleid: com.drtech.altbeacon
 guid: b2e5c68f-95ca-498c-9b37-db3f35e02a64
 platform: android
-minsdk: 3.5.1.GA
+minsdk: 6.0.0.GA
